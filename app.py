@@ -21,183 +21,348 @@ st.set_page_config(page_title="유튜브 통합 관제센터 PRO", page_icon="�
 
 # =========================================================
 # 1) Global Theme (Scanner Dark Tone, NOT pure black)
-#    - fixes: gray text visibility, prompt white background glare,
-#      list vertical split, unified luxury buttons
+#    - fixes: mobile sidebar transparency, input white+white, prompt glare,
+#      card/badge styles, consistent luxury UI
 # =========================================================
 st.markdown(
     """
 <style>
+/* =========================================================
+   THEME: Scanner-like Premium Dark (NON-TRANSPARENT)
+========================================================= */
 :root{
-  --bg0:#07121b;
-  --bg1:#0b1b2a;
-  --bg2:#191a44;
-  --card: rgba(13,28,42,.72);
-  --card2: rgba(15,34,51,.66);
-  --stroke: rgba(255,255,255,.08);
-  --stroke2: rgba(255,255,255,.14);
-  --text:#e9eef7;
-  --muted:#c6d1e3;   /* ✅ 회색 글씨 개선(가독성 올림) */
-  --muted2:#9fb0cc;
-  --accent:#7c5cff;
-  --accent2:#35b6ff;
-  --good:#35d07f;
-  --warn:#ffd166;
-  --bad:#ff5c7a;
-  --shadow: 0 18px 60px rgba(0,0,0,.35);
+  --bg0:#071823;
+  --bg1:#0b2231;
+  --bg2:#0f2c3b;
+
+  --panel:#0e2332;
+  --panel2:#10293a;
+
+  --line:rgba(255,255,255,0.10);
+
+  --text:#eef4ff;
+  --text2:rgba(238,244,255,0.88);
+  --muted:rgba(238,244,255,0.70);
+
+  --accent1:#6d5efc;
+  --accent2:#20d3b0;
+
+  --inputBg:rgba(255,255,255,0.08);
+  --inputBg2:rgba(255,255,255,0.12);
+
+  --btnBg1:rgba(109,94,252,0.26);
+  --btnBg2:rgba(16,41,58,0.78);
+
+  --danger: rgba(239,68,68,0.95);
+  --warn: rgba(245,158,11,0.95);
+
+  --shadow: 0 12px 36px rgba(0,0,0,0.28);
 }
 
+/* Base font */
 html, body, [class*="css"], .stApp, .stMarkdown, .stTextInput, .stTextArea,
-.stSelectbox, .stButton, .stRadio, .stSlider, .stExpander, .stTabs, .stDataFrame {
-  font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif !important;
+.stSelectbox, .stButton, .stRadio, .stSlider, .stExpander, .stTabs, .stDataFrame{
+  font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif !important;
 }
 
-/* App background */
-[data-testid="stAppViewContainer"]{
+/* ===== App background (DOM targets 확장: Streamlit 버전에 따라 다름) ===== */
+html, body{
+  background: linear-gradient(180deg, var(--bg2) 0%, var(--bg1) 35%, var(--bg0) 100%) !important;
+  color: var(--text) !important;
+}
+
+/* 가장 바깥 컨테이너 */
+[data-testid="stAppViewContainer"], .stApp{
   background:
-    radial-gradient(1200px 700px at 18% 8%, rgba(53,182,255,.18), transparent 55%),
-    radial-gradient(900px 600px at 70% 18%, rgba(124,92,255,.22), transparent 58%),
-    linear-gradient(135deg, var(--bg0), var(--bg1) 45%, var(--bg2)) !important;
+    radial-gradient(1100px 520px at 70% -10%, rgba(109,94,252,0.40), rgba(109,94,252,0.00) 55%),
+    radial-gradient(900px 520px at 15% 0%, rgba(32,211,176,0.25), rgba(32,211,176,0.00) 60%),
+    linear-gradient(180deg, var(--bg2) 0%, var(--bg1) 35%, var(--bg0) 100%) !important;
   color: var(--text) !important;
 }
 
-/* Sidebar */
-[data-testid="stSidebar"]{
-  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)) !important;
-  border-right: 1px solid var(--stroke);
+/* 상단 헤더(흰색 뜨는 것 방지) */
+header[data-testid="stHeader"], [data-testid="stToolbar"]{
+  background: transparent !important;
 }
 
-/* Text / caption (gray text) */
-.stMarkdown, .stText, .stCaption, [data-testid="stCaptionContainer"]{
-  color: var(--muted) !important;
+/* 링크 */
+a, a:visited{
+  color: var(--accent2) !important;
+  text-decoration: none !important;
 }
-h1,h2,h3,h4,h5,h6, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3{
+a:hover{
+  text-decoration: underline !important;
+}
+
+/* 텍스트 기본(회색 방지) */
+.stMarkdown, .stMarkdown p, .stMarkdown li, .stMarkdown span,
+.stTitle, .stHeader, .stSubheader{
   color: var(--text) !important;
 }
 
-/* Inputs */
-[data-testid="stTextInput"] input,
-[data-testid="stTextArea"] textarea,
-[data-testid="stSelectbox"] div[data-baseweb="select"] > div{
-  background: var(--card) !important;
-  color: var(--text) !important;
-  border: 1px solid var(--stroke2) !important;
-  border-radius: 14px !important;
+/* labels / captions / help */
+label, .stCaption, [data-testid="stWidgetLabel"], [data-testid="stCaptionContainer"],
+small, .stMarkdown small{
+  color: var(--text2) !important;
 }
-[data-testid="stTextInput"] input:focus,
-[data-testid="stTextArea"] textarea:focus{
+
+/* Streamlit의 회색 안내문(모바일에서 특히 안 보임) */
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] li{
+  color: var(--text2) !important;
+}
+
+/* ===== Sidebar background (mobile 투명 해결: wrapper 3겹 강제) ===== */
+section[data-testid="stSidebar"]{
+  background: var(--panel) !important;
+}
+section[data-testid="stSidebar"] > div:first-child{
+  background: var(--panel) !important;
+  border-right: 1px solid var(--line) !important;
+}
+section[data-testid="stSidebar"] > div:first-child > div{
+  background: var(--panel) !important;
+}
+section[data-testid="stSidebar"] .stMarkdown,
+section[data-testid="stSidebar"] [data-testid="stWidgetLabel"],
+section[data-testid="stSidebar"] .stCaption{
+  color: var(--text2) !important;
+}
+
+/* ===== Containers / blocks ===== */
+.box{
+  border:1px solid var(--line) !important;
+  border-radius:16px !important;
+  padding:12px 14px !important;
+  background: rgba(16,41,58,0.66) !important;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+}
+
+/* =========================
+   INPUTS (TextInput/TextArea/Select)
+   핵심: input 자체 배경/글자 강제해서 "흰 바탕 + 흰 글자" 방지
+========================= */
+
+/* Baseweb wrappers */
+div[data-baseweb="base-input"],
+div[data-baseweb="input"] > div,
+div[data-baseweb="textarea"] > div{
+  background: var(--inputBg) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px !important;
+}
+
+/* Streamlit widget wrappers (버전별) */
+[data-testid="stTextInput"] > div,
+[data-testid="stTextArea"] > div,
+[data-testid="stTextInput"] div[role="textbox"],
+[data-testid="stTextArea"] div[role="textbox"]{
+  background: transparent !important;
+}
+
+/* 실제 input/textarea: 배경까지 직접 지정 (모바일에서 흰색으로 칠해지는 케이스 방지) */
+.stTextInput input,
+.stTextArea textarea,
+input[type="text"], input[type="search"], textarea{
+  background: var(--inputBg) !important;
+  color: var(--text) !important;
+  caret-color: var(--text) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px !important;
+}
+
+/* placeholder */
+.stTextInput input::placeholder,
+.stTextArea textarea::placeholder,
+input[type="text"]::placeholder,
+input[type="search"]::placeholder,
+textarea::placeholder{
+  color: rgba(238,244,255,0.55) !important;
+}
+
+/* focus ring */
+.stTextInput input:focus,
+.stTextArea textarea:focus,
+input[type="text"]:focus,
+input[type="search"]:focus,
+textarea:focus{
   outline: none !important;
-  border-color: rgba(124,92,255,.75) !important;
-  box-shadow: 0 0 0 3px rgba(124,92,255,.18) !important;
+  border: 1px solid rgba(109,94,252,0.70) !important;
+  box-shadow: 0 0 0 3px rgba(109,94,252,0.22) !important;
+}
+
+/* Selectbox */
+.stSelectbox div[data-baseweb="select"] > div{
+  background: var(--inputBg) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px !important;
+  color: var(--text) !important;
+}
+div[data-baseweb="popover"]{
+  background: rgba(12,30,44,0.98) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px !important;
+}
+div[data-baseweb="menu"]{
+  background: transparent !important;
+}
+div[data-baseweb="menu"] *{
+  color: var(--text2) !important;
 }
 
 /* Buttons */
-.stButton>button, [data-testid="baseButton-primary"], [data-testid="baseButton-secondary"]{
-  background: linear-gradient(135deg, rgba(124,92,255,.95), rgba(53,182,255,.85)) !important;
-  color: #08121c !important;
-  border: 1px solid rgba(255,255,255,.12) !important;
-  border-radius: 14px !important;
-  font-weight: 800 !important;
-  box-shadow: 0 18px 60px rgba(0,0,0,.25);
+.stButton>button{
+  width:100% !important;
+  border-radius:14px !important;
+  border:1px solid rgba(109,94,252,0.45) !important;
+  background: linear-gradient(180deg, var(--btnBg1), var(--btnBg2)) !important;
+  color: var(--text) !important;
+  font-weight: 900 !important;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.25);
 }
 .stButton>button:hover{
-  filter: brightness(1.06);
-  transform: translateY(-1px);
+  border-color: rgba(32,211,176,0.55) !important;
+  background: linear-gradient(180deg, rgba(32,211,176,0.18), var(--btnBg2)) !important;
 }
 
-/* Tabs */
-[data-testid="stTabs"] button{
-  color: var(--muted2) !important;
-}
-[data-testid="stTabs"] button[aria-selected="true"]{
-  color: var(--text) !important;
-  border-bottom: 2px solid rgba(124,92,255,.75) !important;
-}
-
-/* Expander / cards */
-[data-testid="stExpander"]{
-  background: rgba(13,28,42,.55) !important;
-  border: 1px solid var(--stroke) !important;
-  border-radius: 16px !important;
-  box-shadow: var(--shadow);
+/* Radio tiles */
+[data-testid="stRadio"] label{
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px !important;
+  padding: 10px 12px !important;
+  margin: 6px 0 !important;
+  color: var(--text2) !important;
 }
 
-/* Code blocks (prompt preview glare fix) */
-[data-testid="stCodeBlock"] pre,
-.stCodeBlock pre,
-code, pre{
-  background: rgba(10,18,28,.88) !important;
-  color: var(--text) !important;
-  border: 1px solid rgba(255,255,255,.10) !important;
+/* Expanders */
+[data-testid="stExpander"] > details{
+  background: rgba(16,41,58,0.62) !important;
+  border: 1px solid var(--line) !important;
   border-radius: 14px !important;
 }
 
-/* Prevent one-letter vertical wrap */
-.stMarkdown ul, .stMarkdown ol, .stMarkdown li, .stMarkdown p{
-  word-break: keep-all !important;
-  overflow-wrap: break-word !important;
-  white-space: normal !important;
+/* Code blocks / st.code: prompt glare 제거 */
+pre, code, [data-testid="stCodeBlock"]{
+  background: rgba(8,20,30,0.92) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px !important;
 }
+
+/* Dataframe */
+[data-testid="stDataFrame"]{
+  background: rgba(16,41,58,0.55) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 14px !important;
+}
+
+/* Copy button HTML */
+.copy-wrap { margin-top: 6px; margin-bottom: 6px; }
+.copy-wrap button{
+  border:1px solid var(--line) !important;
+  padding:10px 14px !important;
+  border-radius:12px !important;
+  background: var(--inputBg) !important;
+  color: var(--text) !important;
+  cursor:pointer !important;
+  font-weight:900 !important;
+}
+.copy-wrap span{ color: var(--text2) !important; }
 
 /* Pills */
 .pill{
-  display:inline-block; padding:4px 10px; border-radius:999px;
-  border:1px solid var(--stroke); background: rgba(255,255,255,.06); margin-right:6px;
-  font-size:12px; color: var(--muted);
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background: rgba(255,255,255,0.05);
+  margin-right:6px;
+  font-size:12px;
+  color: var(--text2) !important;
 }
-.ok{ border-color: rgba(53,208,127,.45); background: rgba(53,208,127,.12); color:#d9ffe9; }
-.warn{ border-color: rgba(255,209,102,.45); background: rgba(255,209,102,.12); color:#fff2cf; }
-.bad{ border-color: rgba(255,92,122,.45); background: rgba(255,92,122,.12); color:#ffd6de; }
+.ok  { border-color: rgba(32,211,176,0.55) !important; }
+.warn{ border-color: rgba(245,158,11,0.55) !important; }
+.bad { border-color: rgba(239,68,68,0.55) !important; }
 
-/* Copy button inside components.html */
-.copy-wrap button{
-  background: rgba(13,28,42,.75) !important;
-  color: var(--text) !important;
-  border: 1px solid var(--stroke2) !important;
-  border-radius: 14px !important;
+/* =========================================================
+   MONSTER CARD STYLES (mcard / badges)
+========================================================= */
+.mcard{
+  border: 1px solid var(--line);
+  background: rgba(16,41,58,0.62);
+  border-radius: 18px;
+  padding: 12px 12px 14px 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
 }
-.copy-wrap button:hover{ border-color: rgba(124,92,255,.55) !important; }
-.copy-wrap span{ color: var(--muted) !important; }
-
-/* Monster card badge */
-.badge-fire{
-  display:inline-flex; align-items:center; gap:6px;
-  padding:4px 10px; border-radius:999px;
-  background: rgba(255,92,122,.18);
-  border: 1px solid rgba(255,92,122,.45);
-  color:#ffd6de;
+.mtitle{
+  margin-top: 8px;
+  font-size: 15px;
   font-weight: 900;
+  line-height: 1.25;
+  color: var(--text);
+}
+.mmeta{
+  margin-top: 6px;
   font-size: 12px;
+  color: var(--text2);
+  opacity: 0.95;
+}
+.badge-fire{
+  display:inline-block;
+  margin-top: 10px;
+  width: 100%;
+  text-align: center;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(239,68,68,0.85), rgba(127,29,29,0.45));
+  border: 1px solid rgba(239,68,68,0.55);
+  color: #fff;
+  font-weight: 900;
 }
 .badge-ok{
-  display:inline-flex; align-items:center; gap:6px;
-  padding:4px 10px; border-radius:999px;
-  background: rgba(53,208,127,.12);
-  border: 1px solid rgba(53,208,127,.35);
-  color:#d9ffe9;
+  display:inline-block;
+  margin-top: 10px;
+  width: 100%;
+  text-align: center;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(32,211,176,0.35), rgba(16,41,58,0.65));
+  border: 1px solid rgba(32,211,176,0.55);
+  color: var(--text);
   font-weight: 900;
-  font-size: 12px;
 }
-.mcard{
-  background: rgba(13,28,42,.55);
-  border:1px solid var(--stroke);
-  border-radius:18px;
-  padding:12px;
-  box-shadow: var(--shadow);
+.mrow{
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
 }
-.mmeta{ color: var(--muted2); font-size: 12px; }
-.mtitle{ color: var(--text); font-weight: 900; font-size: 15px; line-height:1.25; }
-.mrow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
 .mkv{
-  background: rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:12px;
-  padding:8px 10px;
-  min-width: 120px;
+  flex: 1;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.04);
+  border-radius: 12px;
+  padding: 10px 10px;
 }
-.mkv .k{ color: var(--muted2); font-size: 11px; }
-.mkv .v{ color: var(--text); font-weight: 800; }
+.mkv .k{
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+.mkv .v{
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 900;
+}
+
+/* Streamlit image radius inside cards */
+[data-testid="stImage"] img{
+  border-radius: 14px !important;
+}
 </style>
-""",
+    """,
     unsafe_allow_html=True,
 )
 
@@ -741,7 +906,6 @@ summary, hooks(3), titles(10), thumbnail_texts(6), cutlist10(10), next_ideas(3),
 # 7) Monster Scanner (YouTube API Deep Search 200)
 # =========================================================
 def parse_iso8601_duration_to_seconds(d: str) -> int:
-    # e.g. PT1H2M3S
     if not d or not d.startswith("PT"):
         return 0
     h = m = s = 0
@@ -789,7 +953,7 @@ def yt_deep_search_200(
                 type="video",
                 maxResults=50,
                 order=order,
-                videoDuration=video_duration,  # any | short | medium | long
+                videoDuration=video_duration,
             )
             if token:
                 kwargs["pageToken"] = token
@@ -811,7 +975,6 @@ def yt_deep_search_200(
         if not collected_ids:
             return pd.DataFrame(), "NO_RESULTS"
 
-        # videos.list stats (50 ids per request)
         rows: List[Dict[str, Any]] = []
         for i in range(0, len(collected_ids), 50):
             chunk = collected_ids[i:i+50]
@@ -828,7 +991,8 @@ def yt_deep_search_200(
                 channel_id = sn.get("channelId", "")
                 channel_title = sn.get("channelTitle", "")
                 title = sn.get("title", "")
-                thumb = (sn.get("thumbnails", {}) or {}).get("high", (sn.get("thumbnails", {}) or {}).get("default", {})).get("url", "")
+                thumbs = (sn.get("thumbnails", {}) or {})
+                thumb = (thumbs.get("high", {}) or thumbs.get("default", {}) or {}).get("url", "")
                 dur_sec = parse_iso8601_duration_to_seconds(cd.get("duration", ""))
                 rows.append({
                     "videoId": it.get("id", ""),
@@ -850,7 +1014,6 @@ def yt_deep_search_200(
         if df.empty:
             return df, "NO_VIDEO_STATS"
 
-        # channel subscriber counts (batch)
         ch_ids = list({x for x in df["channelId"].tolist() if x})
         ch_map: Dict[str, int] = {}
         for i in range(0, len(ch_ids), 50):
@@ -868,7 +1031,6 @@ def yt_deep_search_200(
         )
         df["isFire"] = df["viralScorePct"] >= 10000.0
 
-        # 기본 정렬(조회수)
         df = df.sort_values(["viewCount"], ascending=False).reset_index(drop=True)
         return df, None
     except Exception as e:
@@ -885,7 +1047,6 @@ def build_claude_prompt(row: Dict[str, Any]) -> str:
     vid = str(row.get("videoId", ""))
     link = f"https://www.youtube.com/watch?v={vid}" if vid else ""
 
-    # ✅ 제목복사 버튼 없음 / AI기획은 Claude용
     return (
         "당신은 숙련된 수석 PD/콘텐츠 전략가입니다. (Claude)\n"
         "아래 ‘벤치마크 영상’ 정보를 기반으로, 조회수/클릭/유지율을 높이기 위한 기획안을 작성하세요.\n\n"
@@ -938,11 +1099,9 @@ with st.sidebar:
 
     model = st.selectbox("OpenAI 모델", ["gpt-4o", "gpt-4o-mini"], index=0)
 
-    # Screen switch
     st.divider()
     screen = st.radio("화면", ["🧑‍✈️ 관제탑", "👾 몬스터 스캐너"], index=0)
 
-    # Advanced in tower
     if tier != "초보":
         lookback_days = st.slider("트렌드 기준: 최근 N일", min_value=7, max_value=90, value=30, step=1)
         competitor_mode = st.radio("경쟁 검색 모드", ["트렌드(최근 N일 + 속도)", "레전드(전체 + 조회수)"], index=0)
@@ -1008,7 +1167,6 @@ if screen == "🧑‍✈️ 관제탑":
         total = max(1, len(urls))
         prog = st.progress(0, text="준비 중...")
 
-        # Step Top10 (중급 이상)
         if tier != "초보":
             st.divider()
             st.subheader("🔥 오늘의 TOP10 주제 추천")
@@ -1021,7 +1179,6 @@ if screen == "🧑‍✈️ 관제탑":
                 st.caption("샘플(상위 10개)")
                 st.dataframe(popular_df.head(10), use_container_width=True)
 
-        # Video loop
         for idx, url in enumerate(urls, start=1):
             vid = get_video_id(url)
             if not vid:
@@ -1091,7 +1248,6 @@ if screen == "🧑‍✈️ 관제탑":
                 with st.expander("🧯 예외/대체 처리 로그"):
                     st.json({"dataQuality": data_quality, "errors": errors})
 
-            # Trend / competitor for non-beginner
             if tier != "초보":
                 st.divider()
                 tabs = st.tabs(["📈 채널 진단", "📡 시장 레이더"])
@@ -1150,7 +1306,6 @@ else:
 
     btn = st.button("🚀 Deep Search (200개)", use_container_width=True)
 
-    # mapping
     order_map = {
         "viewCount(인기)": "viewCount",
         "date(최신)": "date",
@@ -1187,7 +1342,6 @@ else:
             st.error(f"수집 실패: {err or 'UNKNOWN'}")
             st.stop()
 
-        # Save session
         st.session_state["monster_df"] = df
         st.session_state["monster_kw"] = keyword.strip()
         st.success(f"검색 결과: {len(df)}개")
@@ -1196,7 +1350,6 @@ else:
     kw = st.session_state.get("monster_kw", "")
 
     if isinstance(df, pd.DataFrame) and not df.empty:
-        # Sorting buttons
         s1, s2, s3, s4 = st.columns([1, 1, 1, 1])
         with s1:
             sort_views = st.button("조회수순", use_container_width=True)
@@ -1221,7 +1374,6 @@ else:
         st.markdown(f"### 검색 결과: {len(df)}개")
         st.caption(f"필터: {after_opt} / {duration_opt} / {order_opt}")
 
-        # Downloads (CSV/JSON/ZIP)
         export_cols = [
             "videoId", "title", "channelTitle", "publishedAt",
             "viewCount", "subscriberCount", "viralScorePct",
@@ -1241,7 +1393,6 @@ else:
                                file_name=build_filename(project_name, kw, "monster", "LIST", "json"),
                                mime="application/json", use_container_width=True)
         with d3:
-            # ZIP includes CSV + JSON + INDEX
             zip_buf = io.BytesIO()
             with zipfile.ZipFile(zip_buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
                 zf.writestr(build_filename(project_name, kw, "monster", "LIST", "csv"), csv_bytes)
@@ -1253,7 +1404,6 @@ else:
 
         st.divider()
 
-        # Grid cards
         cols = st.columns(4)
         for i, row in df.iterrows():
             col = cols[i % 4]
@@ -1293,12 +1443,10 @@ else:
                     unsafe_allow_html=True
                 )
 
-                # ✅ 제목복사 버튼 삭제 (없음)
-                # ✅ AI 기획(Claude) = 카드 내 복사만
                 prompt = build_claude_prompt(r)
                 clipboard_button("🧠 AI 기획(Claude) 프롬프트 복사", prompt, height=52)
 
-                st.markdown(f"- 링크: {link}")
+                st.markdown(f"🔗 영상 링크: [{link}]({link})")
                 with st.expander("프롬프트 미리보기", expanded=False):
                     st.code(prompt, language="text")
 
