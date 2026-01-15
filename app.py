@@ -23,6 +23,7 @@ st.set_page_config(page_title="유튜브 통합 관제센터 PRO", page_icon="�
 # 1) Global Theme (Scanner Dark Tone, NOT pure black)
 #    - fixes: mobile sidebar transparency, input white+white, prompt glare,
 #      card/badge styles, consistent luxury UI
+#    - PLUS: TOP 주제 리스트/카드까지 다크톤 고정
 # =========================================================
 st.markdown(
     """
@@ -251,11 +252,15 @@ pre, code, [data-testid="stCodeBlock"]{
   border-radius: 12px !important;
 }
 
-/* Dataframe */
+/* Dataframe / table 계열 (화이트 박스 방지) */
 [data-testid="stDataFrame"]{
   background: rgba(16,41,58,0.55) !important;
   border: 1px solid var(--line) !important;
   border-radius: 14px !important;
+  box-shadow: var(--shadow);
+}
+[data-testid="stDataFrame"] *{
+  color: var(--text2) !important;
 }
 
 /* Copy button HTML */
@@ -287,7 +292,7 @@ pre, code, [data-testid="stCodeBlock"]{
 .bad { border-color: rgba(239,68,68,0.55) !important; }
 
 /* =========================================================
-   MONSTER CARD STYLES (mcard / badges)
+   MONSTER / TOP TOPIC CARD STYLES (mcard / badges)
 ========================================================= */
 .mcard{
   border: 1px solid var(--line);
@@ -370,7 +375,7 @@ pre, code, [data-testid="stCodeBlock"]{
 # 2) Title
 # =========================================================
 st.title("🛸 유튜브 통합 관제센터 PRO")
-st.markdown("정밀 분석 + 채널 진단 + 시장 레이더 + **몬스터 스캐너(Deep Search 200)** 를 한 번에.")
+st.markdown("정밀 분석 + 채널 진단 + 시장 레이더 + **몬스터 스캐너(Deep Search 200)** + **TOP 주제(독립 메뉴)**")
 
 # =========================================================
 # 3) Helpers
@@ -686,13 +691,18 @@ def fetch_most_popular(_youtube, region_code: str = "KR", max_results: int = 50)
             vc = safe_int(stt.get("viewCount", 0))
             age = days_since(dt)
             vpd = vc / age if age else vc
+            thumbs = sn.get("thumbnails", {}) or {}
+            thumb = (thumbs.get("high", {}) or thumbs.get("default", {}) or {}).get("url", "")
+            vid = it.get("id", "")
             rows.append({
-                "videoId": it.get("id", ""),
+                "videoId": vid,
                 "title": sn.get("title", ""),
                 "channelTitle": sn.get("channelTitle", ""),
                 "publishedAt": published[:10],
                 "viewCount": vc,
                 "views_per_day": float(vpd),
+                "thumbnail": thumb,
+                "link": f"https://www.youtube.com/watch?v={vid}" if vid else "",
             })
         df = pd.DataFrame(rows)
         if not df.empty:
@@ -1072,7 +1082,8 @@ def build_claude_prompt(row: Dict[str, Any]) -> str:
     )
 
 # =========================================================
-# 8) Sidebar
+# 8) Sidebar (메뉴 통합)
+#    ✅ TOP 주제 추천을 관제탑에서 분리 -> 독립 화면(메뉴)
 # =========================================================
 with st.sidebar:
     st.header("🧩 관제센터 설정")
@@ -1100,8 +1111,9 @@ with st.sidebar:
     model = st.selectbox("OpenAI 모델", ["gpt-4o", "gpt-4o-mini"], index=0)
 
     st.divider()
-    screen = st.radio("화면", ["🧑‍✈️ 관제탑", "👾 몬스터 스캐너"], index=0)
+    screen = st.radio("화면", ["🧑‍✈️ 관제탑", "🔥 TOP 주제", "👾 몬스터 스캐너"], index=0)
 
+    # Advanced controls
     if tier != "초보":
         lookback_days = st.slider("트렌드 기준: 최근 N일", min_value=7, max_value=90, value=30, step=1)
         competitor_mode = st.radio("경쟁 검색 모드", ["트렌드(최근 N일 + 속도)", "레전드(전체 + 조회수)"], index=0)
@@ -1114,10 +1126,64 @@ with st.sidebar:
         max_comment = 30
 
 # =========================================================
-# 9) Control Tower UI
+# 9) TOP 주제 (독립 메뉴)
+#    - 국가 설정
+#    - 최소 5 ~ 최대 30개
+#    - 링크 모아보기: 몬스터처럼 미리보기 카드(썸네일 포함)
+#    - 모바일에서도 4칸 카드 그리드 형태 유지(스트림릿 컬럼 사용)
+# =========================================================
+def render_video_cards_4col(df: pd.DataFrame, mode: str = "top"):
+    if df is None or df.empty:
+        st.caption("표시할 데이터가 없습니다.")
+        return
+
+    cols = st.columns(4)
+    for i, row in df.iterrows():
+        col = cols[i % 4]
+        r = row.to_dict()
+
+        title = str(r.get("title", ""))
+        channel = str(r.get("channelTitle", r.get("channelTitle", "")))
+        pub = str(r.get("publishedAt", ""))
+        views = int(r.get("viewCount", 0))
+        vpd = float(r.get("views_per_day", 0.0))
+        link = str(r.get("link", ""))
+        thumb = str(r.get("thumbnail", ""))
+
+        # 배지: TOP 메뉴는 '속도/조회수' 기준이라 고정 배지로
+        badge_html = f'<span class="badge-ok">📌 TOP 주제</span>'
+
+        with col:
+            st.markdown('<div class="mcard">', unsafe_allow_html=True)
+            if thumb:
+                st.image(thumb, use_container_width=True)
+            st.markdown(f'<div class="mtitle">{title}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="mmeta">📺 {channel} · {pub}</div>', unsafe_allow_html=True)
+            st.markdown(badge_html, unsafe_allow_html=True)
+
+            st.markdown(
+                f"""
+<div class="mrow">
+  <div class="mkv"><div class="k">조회수</div><div class="v">{views:,}</div></div>
+  <div class="mkv"><div class="k">속도(v/day)</div><div class="v">{int(vpd):,}</div></div>
+</div>
+""",
+                unsafe_allow_html=True
+            )
+
+            if link:
+                st.markdown(f"🔗 영상 링크: [{link}]({link})")
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
+# =========================================================
+# 10) Control Tower UI
+#    ✅ TOP10 주제 추천 제거(분리 완료)
 # =========================================================
 if screen == "🧑‍✈️ 관제탑":
     st.subheader("🧑‍✈️ 영상 정밀 분석 (관제탑)")
+    st.caption("※ TOP 주제 추천은 이제 왼쪽 메뉴의 [🔥 TOP 주제]에서 따로 확인합니다. (모바일 스크롤 불편 해결)")
+
     col1, col2 = st.columns([2, 1])
 
     with col1:
@@ -1133,7 +1199,7 @@ if screen == "🧑‍✈️ 관제탑":
     with col2:
         if tier == "초보":
             keyword = ""
-            st.caption("초보 모드: 경쟁/Top10은 숨김")
+            st.caption("초보 모드: 경쟁/레이더는 최소 기능")
         else:
             keyword = st.text_input("⚔️ 경쟁 키워드(선택)", placeholder="예: 트로트, 먹방, 브이로그")
 
@@ -1166,18 +1232,6 @@ if screen == "🧑‍✈️ 관제탑":
 
         total = max(1, len(urls))
         prog = st.progress(0, text="준비 중...")
-
-        if tier != "초보":
-            st.divider()
-            st.subheader("🔥 오늘의 TOP10 주제 추천")
-            region = st.selectbox("지역(트렌드 샘플)", ["KR", "US", "JP", "GB"], index=0)
-            prog.progress(10, text="TOP10 트렌드 샘플 수집 중...")
-            popular_df, pop_err = fetch_most_popular(youtube, region_code=region, max_results=50)
-            if pop_err or popular_df.empty:
-                st.warning("트렌드 샘플을 가져오지 못했습니다. (쿼터/키/네트워크) → 영상 분석은 계속 진행합니다.")
-            else:
-                st.caption("샘플(상위 10개)")
-                st.dataframe(popular_df.head(10), use_container_width=True)
 
         for idx, url in enumerate(urls, start=1):
             vid = get_video_id(url)
@@ -1273,6 +1327,7 @@ if screen == "🧑‍✈️ 관제탑":
                         if cp_err or competitor_df.empty:
                             st.warning("경쟁 데이터를 가져오지 못했습니다.")
                         else:
+                            # ✅ 표 대신 카드로 바꿔도 되지만, 일단 최소 변경(표) 유지
                             st.dataframe(competitor_df[["title", "viewCount", "views_per_day", "publishedAt"]].head(20), use_container_width=True)
 
             prog.progress(overall_progress(idx, total, 1.0), text=f"[{idx}/{total}] 완료")
@@ -1283,7 +1338,61 @@ if screen == "🧑‍✈️ 관제탑":
         st.caption("대기 중… 링크 입력 후 [분석 시작]을 눌러주세요.")
 
 # =========================================================
-# 10) Monster Scanner UI
+# 11) TOP 주제 (독립 화면)
+# =========================================================
+elif screen == "🔥 TOP 주제":
+    st.subheader("🔥 TOP 주제 (독립 메뉴)")
+    st.caption("국가/개수(5~30) 설정 → TOP 주제(= mostPopular 기반) 를 카드로 미리보기 + 링크 모아보기")
+
+    if not youtube_api_key:
+        st.error("YouTube API Key가 없습니다. 사이드바를 확인하세요.")
+        st.stop()
+
+    youtube = get_youtube_client(youtube_api_key)
+
+    c1, c2, c3 = st.columns([1, 1, 2])
+    with c1:
+        region = st.selectbox("국가", ["KR", "US", "JP", "GB", "CA", "AU"], index=0)
+    with c2:
+        n_items = st.slider("표시 개수", min_value=5, max_value=30, value=10, step=1)
+    with c3:
+        st.caption("※ API 샘플은 최대 50까지 가져온 뒤, 설정한 개수만 카드로 표시합니다.")
+
+    btn = st.button("🚀 TOP 주제 불러오기", use_container_width=True)
+
+    if btn:
+        with st.spinner("TOP 주제 수집 중..."):
+            df, err = fetch_most_popular(youtube, region_code=region, max_results=50)
+
+        if err or df.empty:
+            st.error(f"수집 실패: {err or 'UNKNOWN'}")
+            st.stop()
+
+        df = df.head(int(n_items)).copy()
+        st.session_state["top_df"] = df
+        st.session_state["top_region"] = region
+        st.session_state["top_n"] = int(n_items)
+        st.success(f"TOP 주제 로드 완료: {len(df)}개")
+
+    df = st.session_state.get("top_df")
+    if isinstance(df, pd.DataFrame) and not df.empty:
+        st.markdown(f"### {st.session_state.get('top_region','KR')} · TOP {st.session_state.get('top_n',len(df))} 미리보기")
+        render_video_cards_4col(df)
+
+        # 링크 모아보기(복사용)
+        links = [x for x in df["link"].tolist() if isinstance(x, str) and x.strip()]
+        if links:
+            st.divider()
+            st.markdown("### 🔗 링크 모아보기")
+            link_text = "\n".join(links)
+            clipboard_button("📋 링크 전체 복사", link_text)
+            with st.expander("링크 목록 보기", expanded=False):
+                st.code(link_text, language="text")
+    else:
+        st.caption("왼쪽에서 국가/개수 설정 후 [TOP 주제 불러오기]를 눌러주세요.")
+
+# =========================================================
+# 12) Monster Scanner UI
 # =========================================================
 else:
     st.subheader("👾 몬스터 스캐너 (Deep Search 200)")
